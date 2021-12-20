@@ -1,0 +1,11 @@
+import pyautogui as auto
+
+def test():
+    #This program use "opencv-python" package for modify the confidence of the search, using images.
+    x, y = auto.locateCenterOnScreen('./imgs/plots_imagen.png', confidence=0.5)
+    auto.click(x, y)
+    auto.screenshot('screnShot.png')
+    x, y = auto.locateCenterOnScreen('./imgs/apps.png')
+    auto.click(x, y)
+    auto.write('chrome')
+test()

@@ -1,0 +1,147 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import subprocess
+import time
+import datetime
+import pyautogui as auto
+lista_contacto = []
+lista_mensaje = []
+lista_posibilidades = ['hola', 'onda', '!test_saludo', '!rig']
+
+
+subprocess.Popen(r'google-chrome --remote-debugging-port=8989 --user-data-dir="/Desktop/Trabajo Programacion/Programacion/Python_personal/BotWhatsApp/chrome"', shell=True)
+PATH = "./chromedriver"
+
+opt = Options()
+opt.add_experimental_option("debuggerAddress","localhost:8989")
+
+driver = webdriver.Chrome(PATH, options=opt)
+driver.set_window_position(-2500, 0, windowHandle='current')
+driver.get("https://web.whatsapp.com/")
+try:
+    time.sleep(10)
+    driver.minimize_window()
+except:
+    print('No se pudo minimizar')
+time.sleep(3)
+
+
+def busqueda_mensajes():
+    try:
+        mensajes = driver.find_elements_by_class_name('_3ExzF')[-1]
+        mensajes = mensajes.text
+        mensajes = mensajes.split()
+        return mensajes
+    except:
+        return False
+
+def busqueda_mensajes_nuevos():
+    try:
+        WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'span._38M1B')))\
+                .click()
+        return True
+    except:
+        return False
+
+def busqueda_hora_mensaje():
+    try:
+        hora_contacto = driver.find_elements_by_css_selector('span._17Osw')[-1]
+        hora_contacto = hora_contacto.text
+        return hora_contacto
+    except:
+        return False
+
+# def busqueda_contacto():
+#     try:
+#         contacto = driver.find_elements_by_css_selector('span._35k-1._1adfa._3-8er')[-1]
+#         contacto = contacto.text
+#         return contacto
+#     except:
+#         return False
+
+def comprobacion_mensaje(mensaje_lista_entrada):
+    for x in mensaje_lista_entrada:
+        mensaje_posible = x.lower()
+        if mensaje_posible in lista_posibilidades:
+            mensaje_comprobado = mensaje_posible
+    try:
+        return mensaje_comprobado
+    except:
+        return False
+
+def enviar_imagen(nombre_imagen):
+    pass
+
+
+def respuesta(mensaje_a_pasar):
+    if mensaje_a_pasar == '!rig':
+        x, y = auto.locateCenterOnScreen('./imgs/apps.png')
+        auto.click(x, y)
+        auto.write('chia')
+        auto.press('enter')
+        # if mensaje_a_pasar == 'hola':
+        # contacto = busqueda_contacto()
+        # lista_contacto.append(contacto)
+        # respuesta_saludo = f'!Hola {contacto}, este es un bot de mensajeria automatica.'
+        # lista_mensaje.append(respuesta_saludo)
+        # busqueda(lista_contacto, lista_mensaje)
+
+def seleccion_mensajes():
+        hora_actual = (datetime.datetime.now().strftime('%H:%M'))
+        mensaje_saludo = busqueda_mensajes()
+
+        if mensaje_saludo != False:
+            comp = comprobacion_mensaje(mensaje_saludo)
+            hora_mensaje = busqueda_hora_mensaje()
+            if hora_actual == hora_mensaje:
+                if comp != False:
+                    respuesta(comp)
+                else:
+                    analisis_mensajes()
+            else:
+                analisis_mensajes()
+        else:
+            analisis_mensajes()
+
+def analisis_mensajes():
+    click = busqueda_mensajes_nuevos()
+    while click == True:
+        # contacto = busqueda_contacto()
+        hora_mensaje = busqueda_hora_mensaje()
+        mensaje_saludo = busqueda_mensajes()
+        comp = comprobacion_mensaje(mensaje_saludo)
+        if comp != False:
+            respuesta(comp)
+        break
+    time.sleep(3)
+    seleccion_mensajes()
+
+def busqueda(numeros, mensajes):
+    try:
+
+        for values, numero in enumerate(numeros):
+            WebDriverWait(driver, 1).until(EC.presence_of_element_located((By.CSS_SELECTOR,'div._2_1wd.copyable-text.selectable-text')))\
+                    .send_keys(numero)
+
+            lista_contacto.remove(numero)
+
+            escribir_contacto = driver.find_element_by_xpath('/html/body/div[1]/div/div/div[3]/div/div[1]/div/label/div/div[2]')
+            escribir_contacto.send_keys(Keys.ENTER)
+
+            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[1]/div/div/div[4]/div/footer/div[1]/div[2]/div/div[2]')))\
+                    .send_keys(lista_mensaje[values])
+
+            lista_mensaje.remove(lista_mensaje[values])
+
+        enviar_mensaje = driver.find_element_by_xpath('/html/body/div[1]/div/div/div[4]/div/footer/div[1]/div[2]/div/div[2]')
+        enviar_mensaje.send_keys(Keys.ENTER)
+
+    except:
+        busqueda(numeros, mensajes)
+    seleccion_mensajes()
+
+seleccion_mensajes()
